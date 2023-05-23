@@ -25,7 +25,7 @@ export default function Cards({ cities: initialCities }: CardsProps) {
     Promise.all([
       ...cities.map((city) =>
         fetch(
-          `http://api.openweathermap.org/data/2.5/weather?q=${city}&units=metric&lang=en&APPID=${KEY}`
+          `https://api.openweathermap.org/data/2.5/weather?q=${city}&units=metric&lang=en&APPID=${KEY}`
         ).then((response) => response.json())
       ),
     ]).then((data) => {
@@ -59,7 +59,7 @@ export default function Cards({ cities: initialCities }: CardsProps) {
         setLocation(true);
 
         fetch(
-          `http://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&units=metric&lang=en&APPID=${KEY}`
+          `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&units=metric&lang=en&APPID=${KEY}`
         )
           .then((response) => response.json())
           .then((data) => {
