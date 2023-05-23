@@ -16,6 +16,36 @@ export default function Cards({ cities: initialCities }: CardsProps) {
   const [weatherData, setWeatherData] = useState<WeatherData[] | null>(null);
   const [error, setError] = useState("");
   const errorShown = useRef(false);
+  const [location, setLocation] = useState(false);
+
+  const fetchWeatherData = () => {
+    Promise.all([
+      ...cities.map((city) =>
+        fetch(
+          `http://api.openweathermap.org/data/2.5/weather?q=${city}&units=metric&lang=en&APPID=${KEY}`
+        ).then((response) => response.json())
+      ),
+    ]).then((data) => {
+      const validData = data.filter((d) => d.cod !== "404");
+      const errorIndex = data.findIndex((d) => d.cod === "404");
+      if (errorIndex !== -1 && !errorShown.current) {
+        setError(`The city ${cities[errorIndex]} is not valid!`);
+        setCities((cities) =>
+          cities.filter((_, index) => index !== errorIndex)
+        );
+        errorShown.current = true;
+      } else if (errorIndex === -1 && errorShown.current) {
+        setError("");
+        errorShown.current = false;
+      } else {
+        if (location && weatherData) {
+          setWeatherData([weatherData[0], ...validData]);
+        } else {
+          setWeatherData([...validData]);
+        }
+      }
+    });
+  };
 
   useEffect(() => {
     if (navigator.geolocation) {
@@ -23,38 +53,56 @@ export default function Cards({ cities: initialCities }: CardsProps) {
         const lat = position.coords.latitude;
         const lon = position.coords.longitude;
 
-        Promise.all([
-          fetch(
-            `http://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&units=metric&lang=en&APPID=${KEY}`
-          ).then((response) => response.json()),
-          ...cities.map((city) =>
-            fetch(
-              `http://api.openweathermap.org/data/2.5/weather?q=${city}&units=metric&lang=en&APPID=${KEY}`
-            ).then((response) => response.json())
-          ),
-        ]).then((data) => {
-          const validData = data.filter((d) => d.cod !== "404");
-          const errorIndex = data.findIndex((d) => d.cod === "404");
-          if (errorIndex !== -1 && !errorShown.current) {
-            setError(`The city ${cities[errorIndex - 1]} is not valid!`);
-            setCities((cities) =>
-              cities.filter((_, index) => index !== errorIndex - 1)
-            );
-            errorShown.current = true;
-          } else if (errorIndex === -1 && errorShown.current) {
-            setError("");
-            errorShown.current = false;
-          } else {
-            setWeatherData(validData);
-          }
-        });
+        setLocation(true);
+
+        fetch(
+          `http://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&units=metric&lang=en&APPID=${KEY}`
+        )
+          .then((response) => response.json())
+          .then((data) => {
+            setWeatherData((weatherData) => [data, ...(weatherData || [])]);
+          });
       });
+    }
+  }, []);
+
+  useEffect(() => {
+    if (cities.length) {
+      fetchWeatherData();
     }
   }, [cities]);
 
-  if (!weatherData) {
-    return <div>Loading...</div>;
-  }
+  const handleAddCity = (city: string) => {
+    if (cities.length >= 4) {
+      Swal.fire({
+        icon: "error",
+        title: "Oops...",
+        text: "The maximum number of cities has been reached!",
+      });
+    } else if (
+      cities
+        .map((c) => removeAccents(c.toLowerCase()))
+        .includes(removeAccents(city.toLowerCase()))
+    ) {
+      Swal.fire({
+        icon: "error",
+        title: "Oops...",
+        text: "The city is already in the list!",
+      });
+    } else if (
+      weatherData &&
+      removeAccents(weatherData[0].name.toLowerCase()) ===
+        removeAccents(city.toLowerCase())
+    ) {
+      Swal.fire({
+        icon: "error",
+        title: "Oops...",
+        text: "The city is the same as your current location!",
+      });
+    } else {
+      setCities([...cities, city]);
+    }
+  };
 
   const handleDelete = (cityName: string) => {
     setWeatherData(
@@ -78,32 +126,6 @@ export default function Cards({ cities: initialCities }: CardsProps) {
     return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
   };
 
-  const handleAddCity = (city: string) => {
-    setCities((cities) => {
-      if (cities.length >= 4) {
-        Swal.fire({
-          icon: "error",
-          title: "Oops...",
-          text: "The maximum number of cities has been reached!",
-        });
-        return cities;
-      } else if (
-        cities
-          .map((c) => removeAccents(c.toLowerCase()))
-          .includes(removeAccents(city.toLowerCase()))
-      ) {
-        Swal.fire({
-          icon: "error",
-          title: "Oops...",
-          text: "The city is already in the list!",
-        });
-        return cities;
-      } else {
-        return [...cities, city];
-      }
-    });
-  };
-
   if (error) {
     Swal.fire({
       icon: "error",
@@ -123,6 +145,15 @@ export default function Cards({ cities: initialCities }: CardsProps) {
       });
   }
 
+  if (!weatherData) {
+    return (
+      <div className="flex justify-center flex-col items-center mt-3">
+        <CityForm onAddCity={handleAddCity} />
+        Loading...
+      </div>
+    );
+  }
+
   return (
     <div className="flex justify-center flex-col items-center mt-3">
       <CityForm onAddCity={handleAddCity} />
@@ -133,7 +164,7 @@ export default function Cards({ cities: initialCities }: CardsProps) {
               key={data.name}
               weatherData={data}
               onDelete={() => handleDelete(data.name)}
-              showDelete={index !== 0} // no mostrar el botón de eliminar en la primera tarjeta
+              showDelete={location ? index !== 0 : true} // no mostrar el botón de eliminar en la primera tarjeta
             />
           ))}
         </div>
