@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import Card, { WeatherData } from "../card/card";
 import CityForm from "../cityForm/cityForm";
 import Swal from "sweetalert2";
+import ThemeButton from "../themeButton/themeButton";
 
 const KEY = process.env.NEXT_PUBLIC_KEY;
 
@@ -17,6 +18,8 @@ export default function Cards({ cities: initialCities }: CardsProps) {
   const [error, setError] = useState("");
   const errorShown = useRef(false);
   const [location, setLocation] = useState(false);
+  const [message, setMessage] = useState("Loading...");
+  const [theme, setTheme] = useState("light");
 
   const fetchWeatherData = () => {
     Promise.all([
@@ -64,6 +67,7 @@ export default function Cards({ cities: initialCities }: CardsProps) {
           });
       });
     }
+    setMessage("Location not provided - Enter a city");
   }, []);
 
   useEffect(() => {
@@ -148,23 +152,35 @@ export default function Cards({ cities: initialCities }: CardsProps) {
   if (!weatherData) {
     return (
       <div className="flex justify-center flex-col items-center mt-3">
-        <CityForm onAddCity={handleAddCity} />
-        Loading...
+        <ThemeButton onThemeChange={setTheme} />
+
+        <CityForm onAddCity={handleAddCity} theme={theme} />
+
+        <div
+          className={`m-2 w-full md:w-64 h-20 rounded-lg shadow-lg p-4 flex flex-col items-center relative justify-center ${
+            theme === "light" ? "bg-gray-100" : "bg-gray-800"
+          }`}
+        >
+          <b>{message}</b>
+        </div>
       </div>
     );
   }
 
   return (
     <div className="flex justify-center flex-col items-center mt-3">
-      <CityForm onAddCity={handleAddCity} />
+      <ThemeButton onThemeChange={setTheme} />
+      <CityForm onAddCity={handleAddCity} theme={theme} />
+
       <div className="flex  justify-center mt-2">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="flex flex-wrap justify-center gap-4">
           {weatherData.map((data, index) => (
             <Card
               key={data.name}
               weatherData={data}
               onDelete={() => handleDelete(data.name)}
               showDelete={location ? index !== 0 : true} // no mostrar el botón de eliminar en la primera tarjeta
+              theme={theme}
             />
           ))}
         </div>
