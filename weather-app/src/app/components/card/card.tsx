@@ -1,10 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
-
-const KEY = process.env.NEXT_PUBLIC_KEY;
-
-interface WeatherData {
+export interface WeatherData {
   name: string;
   main: {
     temp: number;
@@ -20,37 +16,25 @@ interface WeatherData {
   ];
 }
 
-export default function Card() {
-  const [weatherData, setWeatherData] = useState<WeatherData | null>(null);
+export interface CardProps {
+  weatherData: WeatherData;
+  onDelete?: () => void;
+  showDelete: boolean;
+}
 
-  useEffect(() => {
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(function (position) {
-        var lat = position.coords.latitude;
-        var lon = position.coords.longitude;
-        // Aquí puedes pasar las variables lat y lon a tu API de clima
-        fetch(
-          `http://api.openweathermap.org/data/2.5/weather?lat=${lat}&APPID=${KEY}&lon=${lon}&units=metric&lang=es`
-        )
-          .then((response) => response.json())
-          .then((data) => setWeatherData(data));
-        console.log("lat: ", lat, " lon: ", lon);
-      });
-    }
-  }, []);
-
-  if (!weatherData) {
-    return (
-      <div className="w-64 h-64 rounded-lg shadow-lg p-4 flex flex-col items-center">
-        <h1 className="text-xl font-bold">Loading...</h1>
-      </div>
-    );
-  }
-
+export default function Card({ weatherData, onDelete, showDelete }: CardProps) {
   const iconUrl = `http://openweathermap.org/img/w/${weatherData.weather[0].icon}.png`;
 
   return (
-    <div className="w-64 h-64 rounded-lg shadow-lg p-4 flex flex-col items-center">
+    <div className="m-2 w-full md:w-64 h-64 rounded-lg shadow-lg p-4 flex flex-col items-center relative">
+      {showDelete && ( // condicionalmente renderizar el botón de eliminar
+        <button
+          className="absolute top-2 right-2 text-gray-400 hover:text-red-500"
+          onClick={onDelete}
+        >
+          <i className="fas fa-times">X</i>
+        </button>
+      )}
       <h1 className="text-xl font-bold">{weatherData.name}</h1>
       <img className="my-2 w-16" src={iconUrl} alt="Ícono del clima" />
       <p className="text-gray-700">

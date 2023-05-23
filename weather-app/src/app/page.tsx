@@ -1,11 +1,10 @@
-import Image from "next/image";
-import Card from "./components/card/card";
+import Cards from "./components/cards/cards";
+import CityForm from "./components/cityForm/cityForm";
 
 export default function Home() {
   return (
     <div>
-      hola
-      <Card />
+      <Cards cities={[]} />
     </div>
   );
 }
