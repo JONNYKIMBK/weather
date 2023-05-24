@@ -158,7 +158,7 @@ export default function Cards({ cities: initialCities }: CardsProps) {
 
         <div
           className={`m-2 w-full md:w-64 h-20 rounded-lg shadow-lg p-4 flex flex-col items-center relative justify-center ${
-            theme === "light" ? "bg-gray-100" : "bg-gray-800"
+            theme === "light" ? "bg-blue-300" : "bg-gray-800"
           }`}
         >
           <b>{message}</b>
@@ -172,8 +172,8 @@ export default function Cards({ cities: initialCities }: CardsProps) {
       <ThemeButton onThemeChange={setTheme} />
       <CityForm onAddCity={handleAddCity} theme={theme} />
 
-      <div className="flex  justify-center mt-2">
-        <div className="flex flex-wrap justify-center gap-4">
+      <div className="flex  justify-center mt-2 w-full">
+        <div className="flex flex-wrap justify-center gap-4 w-full">
           {weatherData.map((data, index) => (
             <Card
               key={data.name}
